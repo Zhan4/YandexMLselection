@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Books Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .book {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        img {
+            max-width: 100px;
+            display: block;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #purchaseForm {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Search for Books</h1>
+<input type="text" id="searchInput" placeholder="Enter book title or author">
+<button onclick="searchBooks()">Search</button>
+
+<div id="results"></div>
+
+<div id="purchaseForm">
+    <h2>Purchase Form</h2>
+    <form id="buyForm">
+        <label for="bookTitle">Book Title:</label>
+        <input type="text" id="bookTitle" name="bookTitle" readonly><br><br>
+
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <label for="phone">Phone(через 8):</label>
+        <input type="text" id="phone" name="phone" required><br><br>
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required><br><br>
+
+        <button type="button" onclick="submitForm()">Submit</button>
+        <button type="button" onclick="closeForm()">Close</button>
+    </form>
+</div>
+
+<script>
+const API_KEY = 'AIzaSyAnlPL2llZsCZuSJ6HwZnw3taHBSx4M1D8';
+const SHIT_API_KEY = 'AjfdkslnfsJSNFJDL2JFDLS4JFKDLS21D3AIFNnfds4';
+
+function searchBooks() {
+    const query = document.getElementById('searchInput').value;
+    if (!query) {
+        alert('Please enter a search term.');
+        return;
+    }
+
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${API_KEY}`;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            displayResults(data);
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            alert('Failed to fetch books. Please try again later.');
+        });
+}
+
+function displayResults(data) {
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = '';
+
+    if (data.totalItems === 0) {
+        resultsDiv.innerHTML = '<p>No books found.</p>';
+        return;
+    }
+
+    data.items.forEach(item => {
+        const book = item.volumeInfo;
+        const bookDiv = document.createElement('div');
+        bookDiv.classList.add('book');
+
+        const title = document.createElement('h3');
+        title.textContent = book.title;
+        bookDiv.appendChild(title);
+
+        if (book.authors) {
+            const authors = document.createElement('p');
+            authors.textContent = 'Authors: ' + book.authors.join(', ');
+            bookDiv.appendChild(authors);
+        }
+
+        if (book.description) {
+            const description = document.createElement('p');
+            description.textContent = book.description;
+            bookDiv.appendChild(description);
+        }
+
+        if (book.imageLinks && book.imageLinks.thumbnail) {
+            const thumbnail = document.createElement('img');
+            thumbnail.src = book.imageLinks.thumbnail;
+            thumbnail.alt = 'Book cover';
+            bookDiv.appendChild(thumbnail);
+        }
+
+        const moreButton = document.createElement('button');
+        moreButton.textContent = 'More Info';
+        moreButton.onclick = function() {
+            if (item.saleInfo && item.saleInfo.buyLink) {
+                window.open(item.saleInfo.buyLink, '_blank'); 
+            } else {
+                alert('This book is not available for purchase.');
+            }
+        };
+
+        const buyButton = document.createElement('button');
+        buyButton.textContent = 'Buy';
+        buyButton.onclick = function() {
+            openForm(book.title);
+        };
+
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.marginTop = '10px';
+        buttonContainer.appendChild(buyButton);
+        buttonContainer.appendChild(moreButton);
+        bookDiv.appendChild(buttonContainer);
+
+        resultsDiv.appendChild(bookDiv);
+    });
+}
+
+function openForm(bookTitle) {
+    document.getElementById('purchaseForm').style.display = 'block';
+    document.getElementById('bookTitle').value = bookTitle;
+}
+
+function closeForm() {
+    document.getElementById('purchaseForm').style.display = 'none';
+}
+
+function submitForm() {
+            // Получение данных из формы
+            const bookTitle = document.getElementById("bookTitle").value;
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const phone = document.getElementById("phone").value;
+            const address = document.getElementById("address").value;
+
+            // URL вашего Google Apps Script
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbwqrozya_zulKa7LWlCzMcRDqFwwBbkExDn-9tGTqtTB6WHeNDhoN-p8MFoRXaarOC7KQ/exec';
+
+            // Создание объекта для отправки данных
+            const formData = new FormData();
+            formData.append('bookTitle', bookTitle);
+            formData.append('name', name);
+            formData.append('email', email);
+            formData.append('phone', phone);
+            formData.append('address', address);
+
+            // Отправка данных через fetch
+            fetch(scriptURL, { method: 'POST', body: formData })
+                .then(response => response.text())
+                .then(data => {
+                    alert('Form Submitted Successfully!');
+                    document.getElementById("myForm").reset(); // Сброс формы
+                })
+                .catch(error => console.error('Error!', error.message));
+        }
+</script>
+
+</body>
+</html>
